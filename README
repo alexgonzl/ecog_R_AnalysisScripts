@@ -1,0 +1,4 @@
+This set of scripts are set up for a second level analysis of ecog data using R and reporting as htmls files. 
+The main file is statsWrapper.R which takes various inputs and modifies the corresponding files to analyze the data. 
+
+Author: Alex Gonzalex (alexg8@stanford.edu)
