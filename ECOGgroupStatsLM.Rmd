@@ -1,0 +1,126 @@
+
+ECoG Stats Report
+========================================================
+
+This report uses linear models to evaluate the statistical validity 
+of the data. 
+
+Data details:
+```{r}
+lockType = "stim"
+type = "power"
+band = "hgam"
+```
+
+Additional setup:
+-------------------------------------------------------
+Load necessary libraries:
+```{r}
+library('lme4');
+```
+
+Set additional variables:
+```{r}
+dataPath = '~/Documents/ECOG/Results/Rdata/';
+hem 		= 'all';
+ref 		= 'nonLPCleasL1TvalCh10';
+binType     = 'Bin';
+byBlockStr 	= 'bySubj';
+
+if (lockType == 'stim'){
+	timeStr 	= '0msTo900ms'
+}else if (lockType == 'RT'){
+	timeStr 	= 'n600msTo100ms'
+	}	
+
+if (type=='erp'){  
+  band 			= '';
+  preFix 		= paste(binType,timeStr,hem,'ERPs',sep='')
+  baseLine 		= 'sub';
+  analysisType 	= 'Amp';
+}else if (type=='power'){
+  preFix 		= paste(binType,timeStr,hem,'ERSPs',band,sep='')
+  baseLine 		= 'sub';
+  analysisType 	= 'logPower';
+}
+
+fileName = paste(preFix,'Group',lockType,'Lock',baseLine,analysisType,ref,byBlockStr,sep='');
+```
+
+Load data:
+```{r}
+data 		<- read.csv(paste(dataPath,fileName,'.csv',sep=''),header=F)
+names(data) <- c('M','blank1','T','blank2','Z','blank3','BinNum','chanId','subjId', 'blockId', 
+				 'ROI','dP','HR','FAR','hem','subROI','ITC_Z','ITP_Z',
+				 'Zc','ZcH','ZcCRs','ZH','ZCRs')
+
+data$BinNum 		= as.factor(data$BinNum)
+data$chanId 		= as.factor(data$chanId)
+data$subjId  		= as.factor(data$subjId)
+data$blockId  		= as.factor(data$blockId)
+data$ROI  			= as.factor(data$ROI);
+levels(data$ROI)	= c('IPS','SPL','AG')
+data$chanId 		= as.factor(data$chanId)
+data$hem 			= as.factor(data$hem);
+levels(data$hem)	= c('left','right')
+data$subROI  		= as.factor(data$subROI);
+levels(data$subROI) = c('','pIPS','aIPS','pSPL','aSPL')
+
+nBins 	= length(unique(data$BinNum));
+nChans 	= length(unique(data$chanId));
+nSubjs 	= length(unique(data$subjId));
+nBlocks = length(unique(data$blockId));
+nROIs 	= length(unique(data$ROI));
+```
+
+Simple linear models, evaluated with anova
+------------------------------------------------
+**For the lefts subjects: IPS, SPL interaction test**
+```{r}
+subL 			= (data$hem=='left') & (data$ROI=='IPS' | data$ROI=='SPL')
+LModel.lm 		= lm(Z ~ 1+ ROI*BinNum+subjId+chanId,data=data,subset=subL);
+anova(LModel.lm)
+```
+**IPS omnibus time test**
+```{r}
+subL 			= (data$hem=='left') & (data$ROI=='IPS')
+LModel.lm 		= lm(Z ~ 1+BinNum+subjId+chanId,data=data,subset=subL);
+anova(LModel.lm)
+```
+**IPS individual univariate tests**
+```{r}
+out=matrix(NaN,nrow=nBins,ncol=2, dimnames = list(1:nBins,c('T','P')))
+for (bin in 1:nBins){
+	temp = t.test(data$Z[subL & data$BinNum==bin])
+	out[bin,] = c(temp$statistic,temp$p.value)
+}
+out
+```
+**SPL omnibus time test**
+```{r}
+subL 			= (data$hem=='left') & (data$ROI=='SPL')
+LModel.lm 		= lm(Z ~ 1+BinNum+subjId+chanId,data=data,subset=subL);
+anova(LModel.lm)
+```
+**SPL individual univariate tests**
+```{r}
+out=matrix(NaN,nrow=nBins,ncol=2, dimnames = list(1:nBins,c('T','P')))
+for (bin in 1:nBins){
+	temp = t.test(data$Z[subL & data$BinNum==bin])
+	out[bin,] = c(temp$statistic,temp$p.value)
+}
+out
+```
+**For the right subjects:**
+```{r}
+subR 			= (data$hem=='right') & (data$ROI=='IPS' | data$ROI=='SPL')
+RModel.lm 		= lm(Z ~ 1+ ROI*BinNum+subjId+chanId,data=data,subset=subR);
+anova(RModel.lm)
+```
+
+**Evaluate hemishphere interatction**
+```{r}
+subS 			= (data$ROI=='IPS' | data$ROI=='SPL')
+FModel.lm 		= lm(Z ~ 1+ ROI*BinNum*hem+subjId+chanId,data=data, subset = subS);
+anova(FModel.lm)
+```

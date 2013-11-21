@@ -4,14 +4,14 @@
 library('knitr')
 
 # filepaths
-fileName = '~/Documents/ECOG/RScripts/ECOGgroupStatsLMER2.Rmd'
+fileName = '~/Google Drive/Research/ECoG/ecogScripts/ecog_R_AnalysisScripts/ECOGgroupStatsLM.Rmd'
 outPath  = '~/Google Drive/Research/ECoG Manuscript/stats/'
 
 # settings
-lockType = 'RT'
+lockType = 'stim'
 dataType = 'power'
-band     = 'lgam'
-outFile  = paste(lockType,dataType,band,sep='')
+band     = 'hgam'
+outFile  = paste(lockType,dataType,band,'LM',sep='')
 
 # edit analysis script
 text = readLines(fileName)
