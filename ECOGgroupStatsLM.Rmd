@@ -8,8 +8,8 @@ of the data.
 Data details:
 ```{r}
 lockType = "stim"
-type = "power"
-band = "hgam"
+type = "erp"
+band = ""
 ```
 
 Additional setup:
@@ -84,6 +84,7 @@ anova(LModel.lm)
 **IPS omnibus time test**
 ```{r}
 subL 			= (data$hem=='left') & (data$ROI=='IPS')
+t.test(apply(matrix(data$Z[subL],ncol=nBins),MARGIN=1,FUN=mean))
 LModel.lm 		= lm(Z ~ 1+BinNum+subjId+chanId,data=data,subset=subL);
 anova(LModel.lm)
 ```
@@ -99,6 +100,7 @@ out
 **SPL omnibus time test**
 ```{r}
 subL 			= (data$hem=='left') & (data$ROI=='SPL')
+t.test(apply(matrix(data$Z[subL],ncol=nBins),MARGIN=1,FUN=mean))
 LModel.lm 		= lm(Z ~ 1+BinNum+subjId+chanId,data=data,subset=subL);
 anova(LModel.lm)
 ```

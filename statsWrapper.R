@@ -9,8 +9,8 @@ outPath  = '~/Google Drive/Research/ECoG Manuscript/stats/'
 
 # settings
 lockType = 'stim'
-dataType = 'power'
-band     = 'hgam'
+dataType = 'erp'
+band     = ''
 outFile  = paste(lockType,dataType,band,'LM',sep='')
 
 # edit analysis script
