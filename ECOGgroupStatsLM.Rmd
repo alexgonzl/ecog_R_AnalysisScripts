@@ -7,9 +7,9 @@ of the data.
 
 Data details:
 ```{r}
-lockType = "stim"
-type = "erp"
-band = ""
+lockType = "RT"
+type = "power"
+band = "delta"
 ```
 
 Additional setup:
@@ -105,6 +105,22 @@ LModel.lm 		= lm(Z ~ 1+BinNum+subjId+chanId,data=data,subset=subL);
 anova(LModel.lm)
 ```
 **SPL individual univariate tests**
+```{r}
+out=matrix(NaN,nrow=nBins,ncol=2, dimnames = list(1:nBins,c('T','P')))
+for (bin in 1:nBins){
+	temp = t.test(data$Z[subL & data$BinNum==bin])
+	out[bin,] = c(temp$statistic,temp$p.value)
+}
+out
+```
+**AG omnibus time test**
+```{r}
+subL 			= (data$hem=='left') & (data$ROI=='AG')
+t.test(apply(matrix(data$Z[subL],ncol=nBins),MARGIN=1,FUN=mean))
+LModel.lm 		= lm(Z ~ 1+BinNum+subjId+chanId,data=data,subset=subL);
+anova(LModel.lm)
+```
+**AG individual univariate tests**
 ```{r}
 out=matrix(NaN,nrow=nBins,ncol=2, dimnames = list(1:nBins,c('T','P')))
 for (bin in 1:nBins){
