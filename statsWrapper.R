@@ -8,9 +8,9 @@ fileName = '~/Google Drive/Research/ECoG/ecogScripts/ecog_R_AnalysisScripts/ECOG
 outPath  = '~/Google Drive/Research/ECoG Manuscript/stats/'
 
 # settings
-lockType = 'RT'
-dataType = 'power'
-band     = 'delta'
+lockType = 'stim'
+dataType = 'erp'
+band     = ''
 outFile  = paste(lockType,dataType,band,'LM',sep='')
 
 # edit analysis script

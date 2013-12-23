@@ -7,9 +7,9 @@ of the data.
 
 Data details:
 ```{r}
-lockType = "RT"
-type = "power"
-band = "delta"
+lockType = "stim"
+type = "erp"
+band = ""
 ```
 
 Additional setup:
