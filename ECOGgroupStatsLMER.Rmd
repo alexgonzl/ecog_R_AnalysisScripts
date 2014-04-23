@@ -2,14 +2,14 @@
 ECoG Stats Report
 ========================================================
 
-This report uses lmer and linear models to evaluate the statistical validity 
+This report uses linear mixed effects models to evaluate the statistical validity 
 of the data. 
 
 Data details:
 ```{r}
-lockType = 'stim'; 
-type     = 'power';
-band     = 'hgam'; 
+lockType = "stim"
+type = "power"
+band = "hgam"
 ```
 
 Additional setup:
@@ -17,6 +17,7 @@ Additional setup:
 Load necessary libraries:
 ```{r}
 library('lme4');
+library('pbkrtest');
 ```
 
 Set additional variables:
@@ -28,9 +29,9 @@ binType     = 'Bin';
 byBlockStr 	= 'bySubj';
 
 if (lockType == 'stim'){
-	timeStr 	= '200msTo900ms'
+	timeStr 	= '0msTo1000ms'
 }else if (lockType == 'RT'){
-	timeStr 	= 'n600msTo100ms'
+	timeStr 	= 'n1000msTo200ms'
 	}	
 
 if (type=='erp'){  
@@ -73,78 +74,29 @@ nBlocks = length(unique(data$blockId));
 nROIs 	= length(unique(data$ROI));
 ```
 
-Simple linear models, evaluated with anova
+LMER models, evaluated with Kenward-Roger approximation Ftests 
 ------------------------------------------------
-**For the lefts subjects:**
+**For the lefts subjects: IPS, SPL interaction test**
 ```{r}
-subL 			= data$hem=='left'
-LModel.lm 		= lm(Z ~ 1+ ROI*BinNum+subjId+chanId,data=data,subset=subL);
-anova(LModel.lm)
+subL 			= (data$hem=='left') & (data$ROI=='IPS' | data$ROI=='SPL')
+fullModel 	    = lmer(Z ~ 1 + ROI*BinNum + (1|subjId) + (BinNum|subjId) + (ROI|subjId) + (1|chanId),data=data,subset=subL,REML=F);
+Model_BinNum_ROI= lmer(Z ~ 1 + ROI+BinNum + (1|subjId) + (BinNum|subjId) + (ROI|subjId) + (1|chanId),data=data,subset=subL,REML=F);
+anova(fullModel,Model_BinNum_ROI)
+KRmodcomp(fullModel,Model_BinNum_ROI)
 ```
-
-**For the right subjects:**
+**IPS omnibus time test**
 ```{r}
-subR 			= data$hem=='right'
-RModel.lm 		= lm(Z ~ 1+ ROI*BinNum+subjId+chanId,data=data,subset=subR);
-anova(RModel.lm)
+subL 			= (data$hem=='left') & (data$ROI=='IPS')
+fullModel 		= lmer(Z ~ 1 + BinNum + (1|subjId) + (1|chanId),data=data,subset=subL,REML=F);
+Model_BinNum 	= lmer(Z ~ 1 + (1|subjId) + (1|chanId),data=data,subset=subL,REML=F);
+anova(fullModel,Model_BinNum)
+KRmodcomp(fullModel,Model_BinNum)
 ```
-
-**Evaluate hemishphere interatction**
+**SPL omnibus time test**
 ```{r}
-FModel.lm 		= lm(Z ~ 1+ ROI*BinNum*hem+subjId+chanId,data=data);
-anova(FModel.lm)
+subL 			= (data$hem=='left') & (data$ROI=='SPL')
+fullModel 		= lmer(Z ~ 1 + BinNum + (1|subjId) + (1|chanId),data=data,subset=subL,REML=F);
+Model_BinNum 	= lmer(Z ~ 1 + (1|subjId) + (1|chanId),data=data,subset=subL,REML=F);
+anova(fullModel,Model_BinNum)
+KRmodcomp(fullModel,Model_BinNum)
 ```
-
-
-Mixed Models evaluated with lmer
------------------------------------------------------
-
-First we define the `LRT` function that takes a MER model and an index 
-for a factor, and returns the Chi square statistic based on the log-likelihood 
-of the full and nested models.
-```{r}
-LRT <- function(theModel, idx){
-	modFull 	 = theModel
-	modelTerms_h <-terms(theModel)
-	modelTerms   = attr(modelTerms_h, "term.labels")
-	updateStr    <-paste(".~.-",as.character(modelTerms[idx]))
-	modNested    = update(theModel, updateStr)
-	
-	llFull   = logLik(modFull)
-	llNested = logLik(modNested)
-	
-	chsqval <- 2*(llFull[1] - llNested[1])
-	dfDiff  <- attr(llFull,"df") - attr(llNested,"df")	
-	pVal    <- 1-pchisq(chsqval,dfDiff)
-	
-	out <- c(as.character(modelTerms[idx]),pVal, chsqval, dfDiff)
-	names(out) <- c('Factor', ' P val ' , ' ChiSq ', ' dF ')
-	return(out)	
-}
-```
-
-**Mixed model for lefts**
-```{r}
-LModel.lmer		= lmer(Z ~ 1 + subjId + BinNum + ROI + (1 + BinNum|chanId) , data=data , subset=subL , REML = F)
-LModelInt.lmer	= lmer(Z ~ 1 + subjId + BinNum * ROI + (1 + BinNum|chanId) , data=data , subset=subL , REML = F)
-LRT(LModel.lmer,3)
-LRT(LModelInt.lmer,4)
-```
-
-**Mixed model for rights**
-```{r}
-RModel.lmer	    = lmer(Z ~ 1 + subjId + BinNum + ROI + (1 + BinNum|chanId) , data=data , subset=subR , REML = F)
-RModelInt.lmer	= lmer(Z ~ 1 + subjId + BinNum * ROI + (1 + BinNum|chanId) , data=data , subset=subR , REML = F)
-LRT(RModel.lmer,3)
-LRT(RModelInt.lmer,4)
-```
-
-**Mixed model to test hemisphere interaction.**
-Note that the use of subject as a factor in this model results in an 
-overdetermined matrix. 
-```{r}
-FModel.lmer  	= lmer(Z ~ 1 + BinNum * ROI * hem + (1 + BinNum|chanId) , data=data , REML = F)
-LRT(FModel.lmer,7)
-FModel.lmer  	= lmer(Z ~ 1 + subjId + BinNum * ROI * hem + (1 + BinNum|chanId) , data=data , REML = F)
-```
-

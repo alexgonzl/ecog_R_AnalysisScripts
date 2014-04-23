@@ -8,8 +8,8 @@ of the data.
 Data details:
 ```{r}
 lockType = "stim"
-type = "erp"
-band = ""
+type = "power"
+band = "hgam"
 ```
 
 Additional setup:
@@ -28,9 +28,9 @@ binType     = 'Bin';
 byBlockStr 	= 'bySubj';
 
 if (lockType == 'stim'){
-	timeStr 	= '0msTo900ms'
+	timeStr 	= '0msTo1000ms'
 }else if (lockType == 'RT'){
-	timeStr 	= 'n600msTo100ms'
+	timeStr 	= 'n1000msTo200ms'
 	}	
 
 if (type=='erp'){  
@@ -133,6 +133,12 @@ out
 ```{r}
 subR 			= (data$hem=='right') & (data$ROI=='IPS' | data$ROI=='SPL')
 RModel.lm 		= lm(Z ~ 1+ ROI*BinNum+subjId+chanId,data=data,subset=subR);
+anova(RModel.lm)
+subR 			= (data$hem=='right') & (data$ROI=='IPS')
+RModel.lm 		= lm(Z ~ 1+ BinNum+subjId+chanId,data=data,subset=subR);
+anova(RModel.lm)
+subR 			= (data$hem=='right') & (data$ROI=='SPL')
+RModel.lm 		= lm(Z ~ 1+ BinNum+subjId+chanId,data=data,subset=subR);
 anova(RModel.lm)
 ```
 
